@@ -11,35 +11,37 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_PATH = PROJECT_ROOT / "config.json"
 
-# Default configuration (used if config.json doesn't exist)
+# Default configuration — matches MPK Mini Play mk3 real MIDI mappings
 DEFAULT_CONFIG = {
     "midi": {
         "device_name": "MPK Mini Play",
         "channel": 0,
-        "cc_map": {
-            "button_1": {"cc": 20, "action": "chord_type", "value": "major"},
-            "button_2": {"cc": 21, "action": "chord_type", "value": "minor"},
-            "button_3": {"cc": 22, "action": "chord_type", "value": "sus2"},
-            "button_4": {"cc": 23, "action": "chord_type", "value": "sus4"},
-            "button_5": {"cc": 24, "action": "chord_type", "value": "dim"},
-            "button_6": {"cc": 25, "action": "chord_type", "value": "aug"},
-            "button_7": {"cc": 26, "action": "chord_type", "value": "dom7"},
-            "button_8": {"cc": 27, "action": "chord_type", "value": "maj7"},
+        "keys": {
+            "channel": 0,
+            "note_range": [49, 72],
         },
+        "pads": {
+            "channel": 9,
+            "note_range": [36, 51],
+        },
+        "cc_map": {},
         "knob_map": {
-            "knob_1a": {"cc": 70, "action": "inversion"},
-            "knob_2a": {"cc": 71, "action": "spread"},
-            "knob_3a": {"cc": 72, "action": "volume"},
-            "knob_4a": {"cc": 73, "action": "reverb"},
+            "knob_1a": {"cc": 70, "action": "chord_type"},
+            "knob_2a": {"cc": 71, "action": "voicing"},
+            "knob_3a": {"cc": 72, "action": "reverb"},
+            "knob_4a": {"cc": 73, "action": "volume"},
+            "knob_1b": {"cc": 74, "action": "instrument_select"},
+            "knob_2b": {"cc": 75, "action": "expression"},
+            "knob_3b": {"cc": 76, "action": "sustain_level"},
+            "knob_4b": {"cc": 77, "action": "preset_select"},
+            "mod_wheel": {"cc": 1, "action": "modulation"},
         },
-        "joystick": {
-            "x": {"cc": 1, "action": "pitch_bend"},
-            "y": {"cc": 2, "action": "modulation"},
-        },
+        "joystick": {},
     },
     "synth": {
         "soundfont": "/usr/share/sounds/sf2/FluidR3_GM.sf2",
         "audio_driver": "alsa",
+        "audio_device": "hw:2,0",
         "instrument": 0,
         "gain": 0.8,
         "reverb": 0.4,
@@ -60,6 +62,16 @@ DEFAULT_CONFIG = {
         "key_root": None,
     },
 }
+
+# Chord types that knob_1 cycles through
+CHORD_TYPES = ["major", "minor", "sus2", "sus4", "dim", "aug", "dom7", "maj7", "min7"]
+
+# Voicing modes that knob_2 cycles through
+VOICING_MODES = ["close", "spread", "drop2", "drop3", "open"]
+
+
+# GM presets useful for chord engine
+PRESETS = [0, 4, 5, 6, 11, 16, 19, 24, 26, 33, 48, 52, 56, 80, 88, 95]
 
 
 class Config:
@@ -121,21 +133,43 @@ class Config:
         return self.data["chord"]
 
     def get_cc_action(self, cc_number):
-        """Look up what a CC number does. Returns (action, value) or None."""
-        # Check buttons
-        for btn in self.midi["cc_map"].values():
-            if btn["cc"] == cc_number:
-                return btn["action"], btn.get("value")
-        # Check knobs
-        for knob in self.midi["knob_map"].values():
-            if knob["cc"] == cc_number:
-                return knob["action"], None
+        """Look up what a CC number does. Returns (action, value) or (None, None)."""
+        # Check cc_map (button-style, may have value)
+        for entry in self.midi.get("cc_map", {}).values():
+            if entry["cc"] == cc_number:
+                return entry["action"], entry.get("value")
+        # Check knob_map
+        for entry in self.midi.get("knob_map", {}).values():
+            if entry["cc"] == cc_number:
+                return entry["action"], None
         # Check joystick
-        for axis in self.midi["joystick"].values():
-            if axis["cc"] == cc_number:
-                return axis["action"], None
+        for entry in self.midi.get("joystick", {}).values():
+            if isinstance(entry, dict) and entry.get("cc") == cc_number:
+                return entry["action"], None
         return None, None
 
     def get_button_cc_list(self):
         """Get list of CC numbers assigned to chord type buttons."""
-        return [btn["cc"] for btn in self.midi["cc_map"].values()]
+        return [btn["cc"] for btn in self.midi.get("cc_map", {}).values()]
+
+    def cc_to_chord_type(self, cc_value):
+        """Map a CC value (0-127) to a chord type name."""
+        idx = int(cc_value / 128 * len(CHORD_TYPES))
+        idx = min(idx, len(CHORD_TYPES) - 1)
+        return CHORD_TYPES[idx]
+
+    def cc_to_voicing(self, cc_value):
+        """Map a CC value (0-127) to a voicing mode name."""
+        idx = int(cc_value / 128 * len(VOICING_MODES))
+        idx = min(idx, len(VOICING_MODES) - 1)
+        return VOICING_MODES[idx]
+
+    def cc_to_octave_shift(self, cc_value):
+        """Map CC 0-127 to octave shift -2..+2."""
+        return int(cc_value / 127 * 4) - 2
+
+    def cc_to_preset(self, cc_value):
+        """Map CC 0-127 to a GM preset number."""
+        idx = int(cc_value / 128 * len(PRESETS))
+        idx = min(idx, len(PRESETS) - 1)
+        return PRESETS[idx]
