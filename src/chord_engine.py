@@ -69,7 +69,8 @@ class ChordEngine:
         self.root_note = None          # MIDI note number of root
         self.chord_type = self.config.get("default_type", "major")
         self.inversion = 0             # 0-3
-        self.spread = 0.0              # 0.0 - 1.0
+        self.spread = 0.0
+        self.octave_shift = 0              # 0.0 - 1.0
         self.voice_leading_enabled = self.config.get("voice_leading", True)
         self.default_octave = self.config.get("default_octave", 4)
 
@@ -93,6 +94,10 @@ class ChordEngine:
         """Set inversion from CC value (0-127)."""
         # Map 0-127 to 0-3 inversions
         self.inversion = min(cc_value // 32, 3)
+
+    def set_voicing(self, voicing_name):
+        """Set the voicing mode (close, spread, drop2, drop3, open)."""
+        self.voicing = voicing_name
 
     def set_spread(self, cc_value):
         """Set spread from CC value (0-127)."""
