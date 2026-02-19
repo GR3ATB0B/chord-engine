@@ -74,11 +74,11 @@ class MidiHandler:
 
         if msg.type == "note_on" and msg.velocity > 0:
             if self.on_note_on:
-                self.on_note_on(msg.note, msg.velocity)
+                self.on_note_on(msg.channel, msg.note, msg.velocity)
 
         elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
             if self.on_note_off:
-                self.on_note_off(msg.note)
+                self.on_note_off(msg.channel, msg.note)
 
         elif msg.type == "control_change":
             if self.on_cc:
