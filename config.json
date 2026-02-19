@@ -1,0 +1,48 @@
+{
+    "midi": {
+        "device_name": "MPK Mini Play",
+        "channel": 0,
+        "cc_map": {
+            "button_1": {"cc": 20, "action": "chord_type", "value": "major"},
+            "button_2": {"cc": 21, "action": "chord_type", "value": "minor"},
+            "button_3": {"cc": 22, "action": "chord_type", "value": "sus2"},
+            "button_4": {"cc": 23, "action": "chord_type", "value": "sus4"},
+            "button_5": {"cc": 24, "action": "chord_type", "value": "dim"},
+            "button_6": {"cc": 25, "action": "chord_type", "value": "aug"},
+            "button_7": {"cc": 26, "action": "chord_type", "value": "dom7"},
+            "button_8": {"cc": 27, "action": "chord_type", "value": "maj7"}
+        },
+        "knob_map": {
+            "knob_1a": {"cc": 70, "action": "inversion"},
+            "knob_2a": {"cc": 71, "action": "spread"},
+            "knob_3a": {"cc": 72, "action": "volume"},
+            "knob_4a": {"cc": 73, "action": "reverb"}
+        },
+        "joystick": {
+            "x": {"cc": 1, "action": "pitch_bend"},
+            "y": {"cc": 2, "action": "modulation"}
+        }
+    },
+    "synth": {
+        "soundfont": "/usr/share/sounds/sf2/FluidR3_GM.sf2",
+        "audio_driver": "alsa",
+        "instrument": 0,
+        "gain": 0.8,
+        "reverb": 0.4,
+        "chorus": 0.0,
+        "buffer_size": 64
+    },
+    "display": {
+        "width": 1280,
+        "height": 720,
+        "fullscreen": true,
+        "fps": 60
+    },
+    "chord": {
+        "default_type": "major",
+        "default_octave": 4,
+        "voice_leading": true,
+        "key_mode": null,
+        "key_root": null
+    }
+}
