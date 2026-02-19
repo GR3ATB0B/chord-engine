@@ -2,35 +2,70 @@
     "midi": {
         "device_name": "MPK Mini Play",
         "channel": 0,
-        "cc_map": {
-            "button_1": {"cc": 20, "action": "chord_type", "value": "major"},
-            "button_2": {"cc": 21, "action": "chord_type", "value": "minor"},
-            "button_3": {"cc": 22, "action": "chord_type", "value": "sus2"},
-            "button_4": {"cc": 23, "action": "chord_type", "value": "sus4"},
-            "button_5": {"cc": 24, "action": "chord_type", "value": "dim"},
-            "button_6": {"cc": 25, "action": "chord_type", "value": "aug"},
-            "button_7": {"cc": 26, "action": "chord_type", "value": "dom7"},
-            "button_8": {"cc": 27, "action": "chord_type", "value": "maj7"}
+        "keys": {
+            "channel": 0,
+            "note_range": [
+                49,
+                72
+            ]
         },
+        "pads": {
+            "channel": 9,
+            "note_range": [
+                36,
+                51
+            ]
+        },
+        "cc_map": {},
         "knob_map": {
-            "knob_1a": {"cc": 70, "action": "inversion"},
-            "knob_2a": {"cc": 71, "action": "spread"},
-            "knob_3a": {"cc": 72, "action": "volume"},
-            "knob_4a": {"cc": 73, "action": "reverb"}
+            "knob_1a": {
+                "cc": 70,
+                "action": "chord_type"
+            },
+            "knob_2a": {
+                "cc": 71,
+                "action": "voicing"
+            },
+            "knob_3a": {
+                "cc": 72,
+                "action": "reverb"
+            },
+            "knob_4a": {
+                "cc": 73,
+                "action": "volume"
+            },
+            "knob_1b": {
+                "cc": 74,
+                "action": "octave_shift"
+            },
+            "knob_2b": {
+                "cc": 75,
+                "action": "expression"
+            },
+            "knob_3b": {
+                "cc": 76,
+                "action": "sustain_level"
+            },
+            "knob_4b": {
+                "cc": 77,
+                "action": "preset_select"
+            },
+            "mod_wheel": {
+                "cc": 1,
+                "action": "modulation"
+            }
         },
-        "joystick": {
-            "x": {"cc": 1, "action": "pitch_bend"},
-            "y": {"cc": 2, "action": "modulation"}
-        }
+        "joystick": {}
     },
     "synth": {
         "soundfont": "/usr/share/sounds/sf2/FluidR3_GM.sf2",
         "audio_driver": "alsa",
+        "audio_device": "hw:2,0",
         "instrument": 0,
-        "gain": 0.8,
+        "gain": 1.0,
         "reverb": 0.4,
         "chorus": 0.0,
-        "buffer_size": 64
+        "buffer_size": 1024
     },
     "display": {
         "width": 1280,
