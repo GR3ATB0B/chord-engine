@@ -30,7 +30,7 @@ class SynthEngine:
 
         soundfont = self.config.get("soundfont", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
         driver = self.config.get("audio_driver", "alsa")
-        gain = self.config.get("gain", 0.8)
+        gain = self.config.get("gain", 1.0)
 
         if not os.path.exists(soundfont):
             print(f"❌ SoundFont not found: {soundfont}")
@@ -42,12 +42,21 @@ class SynthEngine:
             # Create FluidSynth instance with low-latency settings
             self.fs = fluidsynth.Synth(gain=gain)
 
-            # Set small buffer for low latency
-            buffer_size = self.config.get("buffer_size", 64)
+            # Audio buffer settings (larger = stable, less choppy)
+            buffer_size = self.config.get("buffer_size", 2048)
             self.fs.setting("audio.period-size", buffer_size)
-            self.fs.setting("audio.periods", 2)
+            self.fs.setting("audio.periods", 8)
+            self.fs.setting("synth.sample-rate", 44100.0)
+            self.fs.setting("synth.polyphony", 64)
+            self.fs.setting("audio.realtime-prio", 0)
+            self.fs.setting("synth.overflow.percussion", 5000.0)
+            self.fs.setting("synth.overflow.sustained", 5000.0)
 
             # Start audio driver
+            # Set audio device if configured
+            device = self.config.get("audio_device", "")
+            if device:
+                self.fs.setting("audio.alsa.device", device)
             self.fs.start(driver=driver)
 
             # Load SoundFont
@@ -75,18 +84,30 @@ class SynthEngine:
     def play_chord(self, note_velocity_pairs):
         """
         Play a chord (list of (note, velocity) tuples).
-        Stops any currently sounding notes first.
+        Uses legato: new notes start before old ones release for smooth transitions.
         """
         if not self._initialized:
             return
 
-        # Stop current notes
-        self.stop_chord()
+        new_notes = [n for n, v in note_velocity_pairs]
+        old_notes = self.current_notes[:]
 
-        # Play new notes
-        for note, velocity in note_velocity_pairs:
+        # Notes that continue (in both old and new) — don't touch them
+        keep = set(new_notes) & set(old_notes)
+        # Notes to add
+        add = [(n, v) for n, v in note_velocity_pairs if n not in keep]
+        # Notes to remove
+        remove = [n for n in old_notes if n not in keep]
+
+        # Play new notes FIRST (before killing old ones) for overlap
+        for note, velocity in add:
             self.fs.noteon(0, note, velocity)
-            self.current_notes.append(note)
+
+        # Then release old notes that aren't in the new chord
+        for note in remove:
+            self.fs.noteoff(0, note)
+
+        self.current_notes = list(new_notes)
 
     def stop_chord(self):
         """Stop all currently sounding notes."""
@@ -124,6 +145,12 @@ class SynthEngine:
         if not self._initialized:
             return
         self.fs.cc(0, 1, value)
+
+    def set_sustain(self, value):
+        """Set sustain level from CC value (0-127)."""
+        if not self._initialized:
+            return
+        self.fs.cc(0, 64, min(127, value))
 
     def pitch_bend(self, value):
         """Set pitch bend. value: -8192 to 8191."""
@@ -178,6 +205,9 @@ class DummySynth:
         pass
 
     def pitch_bend(self, value):
+        pass
+
+    def set_sustain(self, value):
         pass
 
     def shutdown(self):
